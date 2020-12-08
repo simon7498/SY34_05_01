@@ -11,7 +11,6 @@
             <header-extensions>h</header-extensions>
             <asminc-extensions/>
             <sourceEncoding>ISO-8859-1</sourceEncoding>
-            <make-dep-projects/>
             <sourceRootList>
                 <sourceRootElem>../8bitswdk_pic18f46j50_24j40/firmware</sourceRootElem>
                 <sourceRootElem>../../MLA/framework/miwi</sourceRootElem>
@@ -26,6 +25,7 @@
             <formatting>
                 <project-formatting-style>false</project-formatting-style>
             </formatting>
+            <make-dep-projects/>
         </data>
     </configuration>
 </project>
