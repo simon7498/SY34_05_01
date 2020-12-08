@@ -252,6 +252,7 @@ void RX(void){
     if(MiApp_MessageAvailable())
     {
         uartPrint(rxMessage.Payload);
+        uartPrint("\n\r");
 		MiApp_DiscardMessage();     
     }
 }
@@ -260,20 +261,24 @@ void RX(void){
  * Gestion des messages sortants
  */
 void TX(void){
-
+    
     if(!PORTBbits.RB2) {
 		nbPushRB2++;
 		sendMeassageBroadcast(myPseudo,nbPushRB2);
 	}
+
 	if(!PORTBbits.RB0) {
 		nbPushRB0++;
-		destinataire[3] = '1';
+        if(myShortAddress.v[1] == 0) {
+            destinataire[3] = '1';
+        }
+        else if(myShortAddress.v[1] == 1) {
+            destinataire[3] = '0';
+        }
+        else
+            destinataire[3] = '2';
+        
 		sendMeassageUnicast(myPseudo,nbPushRB0,destinataire);
-	}
-	if(!PORTBbits.RB1) {
-		nbPushRB1++;
-		destinataire[3] = '2';
-		sendMeassageUnicast(myPseudo,nbPushRB1,destinataire);
 	}
    
 }
@@ -309,10 +314,10 @@ void sendMeassageBroadcast(char * pseudo,int nbPush)
 	MiApp_WriteData(nbPushChar[0]);			// remplissage de la pile d'émission le nb de push
 	MiApp_WriteData(nbPushChar[1]);
     MiApp_WriteData("\0");
-	uartPrint("\0");
+	
 	if(!MiApp_BroadcastPacket(false))
-		uartPrint("\nErreur emission message broadast\n");
-    else uartPrint("\nMessage broadast envoyé !\n");
+		uartPrint("\n\rErreur emission message broadast\n");
+    else uartPrint("\n\rMessage broadast envoye !\n");
 }
 
 
@@ -356,6 +361,6 @@ void sendMeassageUnicast(char * pseudo,int nbPush,char  * destinataire)
 	}
 	MiApp_WriteData("\0");
 	if(!MiApp_UnicastConnection(TX_Index_Unicast,false))
-		uartPrint("\nErreur emission message unicast\n");
+		uartPrint("\n\rErreur emission message unicast\n");
 	
 }

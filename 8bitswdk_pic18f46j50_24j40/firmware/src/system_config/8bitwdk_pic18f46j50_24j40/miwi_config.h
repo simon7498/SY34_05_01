@@ -171,7 +171,7 @@
 // MY_PAN_ID defines the PAN identifier. Use 0xFFFF if prefer a 
 // random PAN ID.
 /*********************************************************************/
-#define MY_PAN_ID                       0x4321
+#define MY_PAN_ID                       0x6666
 
 
 /*********************************************************************/
