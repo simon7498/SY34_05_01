@@ -92,7 +92,11 @@ extern ACTIVE_SCAN_RESULT               ActiveScanResults[ACTIVE_SCAN_RESULT_SIZ
 extern RECEIVED_MESSAGE  rxMessage;
 
 char myPseudo[PSEUDO_MAX_LENGTH+1];
-
+char destinataire[] = "0x0100";
+uint8_t 							TX_Index_Unicast;					// index pour la transmission unicast
+int nbPushRB0 = 0;	
+int nbPushRB1 = 0;	
+int nbPushRB2 = 0;
 
     
 /****************************************************/
@@ -105,6 +109,8 @@ void TX(void);
 void broadcastData(char *,...);
 void initChat(void);
 void initNwk(void);
+void sendMeassageBroadcast(char * pseudo,int nbPush);
+void sendMeassageUnicast(char * pseudo,int nbPush,char  * destinataire);
 
 
 
@@ -243,8 +249,10 @@ void getPseudo(char * pseudo){
  * Gestion des messages entrants
  */
 void RX(void){
-    if(MiApp_MessageAvailable()){
-    MiApp_DiscardMessage();
+    if(MiApp_MessageAvailable())
+    {
+        uartPrint(rxMessage.Payload);
+		MiApp_DiscardMessage();     
     }
 }
 
@@ -252,8 +260,102 @@ void RX(void){
  * Gestion des messages sortants
  */
 void TX(void){
+
+    if(!PORTBbits.RB2) {
+		nbPushRB2++;
+		sendMeassageBroadcast(myPseudo,nbPushRB2);
+	}
+	if(!PORTBbits.RB0) {
+		nbPushRB0++;
+		destinataire[3] = '1';
+		sendMeassageUnicast(myPseudo,nbPushRB0,destinataire);
+	}
+	if(!PORTBbits.RB1) {
+		nbPushRB1++;
+		destinataire[3] = '2';
+		sendMeassageUnicast(myPseudo,nbPushRB1,destinataire);
+	}
+   
 }
 
 
 
 
+// modifierTX_BUFFER_SIZE
+
+void sendMeassageBroadcast(char * pseudo,int nbPush)
+{
+	MiApp_FlushTx();					// vide la pile Tx
+	char chaine1[] = "Pseudo : ";
+	char chaine2[] = ", message broadcast ";
+	int i = 0;
+	while(chaine1[i] != 0) {
+		MiApp_WriteData(chaine1[i]);		// remplissage de la pile d'émission avec "Pseudo : "
+		i++;
+	}
+	i = 0;
+	while(pseudo[i] != 0) {
+		MiApp_WriteData(pseudo[i]);		// remplissage de la pile d'émission avec le pseudo
+		i++;
+	}
+	i = 0;
+	while(chaine2[i] != 0) {
+		MiApp_WriteData(chaine2[i]);		// remplissage de la pile d'émission avec ", message broadcast "
+		i++;
+	}
+	char nbPushChar[] = "00";
+    nbPushChar[0]+=nbPush/10;
+    nbPushChar[1]+=nbPush%10;
+	MiApp_WriteData(nbPushChar[0]);			// remplissage de la pile d'émission le nb de push
+	MiApp_WriteData(nbPushChar[1]);
+    MiApp_WriteData("\0");
+	uartPrint("\0");
+	if(!MiApp_BroadcastPacket(false))
+		uartPrint("\nErreur emission message broadast\n");
+    else uartPrint("\nMessage broadast envoyé !\n");
+}
+
+
+void sendMeassageUnicast(char * pseudo,int nbPush,char  * destinataire) 
+{
+	
+	MiApp_FlushTx();					// vide la pile Tx
+	char chaine1[] = "Pseudo : ";
+	char chaine2[] = ", message unicast ";
+	char chaine3[] = " vers ";
+	int i = 0;
+	while(chaine1[i] != 0) {
+		MiApp_WriteData(chaine1[i]);		// remplissage de la pile d'émission avec "Pseudo : "
+		i++;
+	}
+	i = 0;
+	while(pseudo[i] != 0) {
+		MiApp_WriteData(pseudo[i]);		// remplissage de la pile d'émission avec le pseudo
+		i++;
+	}
+	i = 0;
+	while(chaine2[i] != 0) {
+		MiApp_WriteData(chaine2[i]);		// remplissage de la pile d'émission avec ", message broadcast "
+		i++;
+	}
+	char nbPushChar[] = "00";
+    nbPushChar[0]+=nbPush/10;
+    nbPushChar[1]+=nbPush%10;
+	MiApp_WriteData(nbPushChar[0]);			// remplissage de la pile d'émission le nb de push
+	MiApp_WriteData(nbPushChar[1]);
+
+	i = 0;
+	while(chaine3[i] != 0) {
+		MiApp_WriteData(chaine3[i]);		// remplissage de la pile d'émission avec " vers "
+		i++;
+	}
+	i = 0;
+	while(destinataire[i] != 0) {
+		MiApp_WriteData(destinataire[i]);		// remplissage de la pile d'émission avec le num de destinataire
+		i++;
+	}
+	MiApp_WriteData("\0");
+	if(!MiApp_UnicastConnection(TX_Index_Unicast,false))
+		uartPrint("\nErreur emission message unicast\n");
+	
+}
