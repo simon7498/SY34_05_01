@@ -1,9 +1,9 @@
 /**
  * TP SY34 
  *
- * Nom binôme :
+ * Nom binôme : Simon MATHEY, Florian BROUSSARD, Jason BRIAN MEKAM TSINGANG
  *
- * Version :
+ * Version : finale
  *
  */
 
@@ -150,7 +150,7 @@ void initChat(void){
     vT100SetCursorPos(0,0);
     uartPrint("Saisissez votre pseudo : ");
     getPseudo(myPseudo);	
-    uartPrint("\r\n Bonjour : ");
+    uartPrint("\r\nBonjour : ");
     uartPrint(myPseudo);
     uartPrint("!\r\n");
 #endif    
@@ -260,14 +260,21 @@ void RX(void){
 /**
  * Gestion des messages sortants
  */
+bool front_montant1 = true;
+bool front_montant2 = true;
 void TX(void){
     
-    if(!PORTBbits.RB2) {
+    if(!PORTBbits.RB2 && front_montant1) {          // permet d'envoyer un seul message juqu'au prochain appuie (détection d'un front montant)
+		front_montant1 = false;
 		nbPushRB2++;
 		sendMeassageBroadcast(myPseudo,nbPushRB2);
 	}
+	else if(PORTBbits.RB2 & !front_montant1) {     // ractive la possibilité d'envoyer un autre message si le bouton est relâché
+		front_montant1 = true;
+	}
 
-	if(!PORTBbits.RB0) {
+	if(!PORTBbits.RB0 && front_montant2) {
+		front_montant2 = false;
 		nbPushRB0++;
         if(myShortAddress.v[1] == 0) {
             destinataire[3] = '1';
@@ -276,9 +283,12 @@ void TX(void){
             destinataire[3] = '0';
         }
         else
-            destinataire[3] = '2';
+            destinataire[3] = '0';
         
 		sendMeassageUnicast(myPseudo,nbPushRB0,destinataire);
+	}
+	else if(PORTBbits.RB0 & !front_montant2) {
+		front_montant2 = true;
 	}
    
 }
@@ -286,7 +296,7 @@ void TX(void){
 
 
 
-// modifierTX_BUFFER_SIZE
+
 
 void sendMeassageBroadcast(char * pseudo,int nbPush)
 {
@@ -313,11 +323,11 @@ void sendMeassageBroadcast(char * pseudo,int nbPush)
     nbPushChar[1]+=nbPush%10;
 	MiApp_WriteData(nbPushChar[0]);			// remplissage de la pile d'émission le nb de push
 	MiApp_WriteData(nbPushChar[1]);
-    MiApp_WriteData("\0");
+    MiApp_WriteData('\0');
 	
 	if(!MiApp_BroadcastPacket(false))
 		uartPrint("\n\rErreur emission message broadast\n");
-    else uartPrint("\n\rMessage broadast envoye !\n");
+    else uartPrint("\n\rMessage broadast envoye !");
 }
 
 
@@ -340,7 +350,7 @@ void sendMeassageUnicast(char * pseudo,int nbPush,char  * destinataire)
 	}
 	i = 0;
 	while(chaine2[i] != 0) {
-		MiApp_WriteData(chaine2[i]);		// remplissage de la pile d'émission avec ", message broadcast "
+		MiApp_WriteData(chaine2[i]);		// remplissage de la pile d'émission avec ", message unicast "
 		i++;
 	}
 	char nbPushChar[] = "00";
@@ -359,8 +369,9 @@ void sendMeassageUnicast(char * pseudo,int nbPush,char  * destinataire)
 		MiApp_WriteData(destinataire[i]);		// remplissage de la pile d'émission avec le num de destinataire
 		i++;
 	}
-	MiApp_WriteData("\0");
+	MiApp_WriteData('\0');
 	if(!MiApp_UnicastConnection(TX_Index_Unicast,false))
 		uartPrint("\n\rErreur emission message unicast\n");
+    else uartPrint("\n\rMessage unicast envoyé.");
 	
 }

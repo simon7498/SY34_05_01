@@ -146,7 +146,7 @@
 // EUI_x defines the xth byte of permanent address for the wireless
 // node
 /*********************************************************************/
-#define EUI_7 0x34
+#define EUI_7 0x35
 #define EUI_6 0x66
 #define EUI_5 0x55
 #define EUI_4 0x44
